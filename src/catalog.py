@@ -3,22 +3,18 @@ Get all courses from catalog.
 """
 
 import json
+import time
 from xml.etree import ElementTree
 
 import requests
 from tqdm import tqdm
 
-BASE_URL = "https://courses.illinois.edu/cisapp/explorer/catalog/2024/fall.xml"
+BASE_URL = "https://courses.illinois.edu/cisapp/explorer/catalog/2022/fall.xml"
 
 
-def get_xml(url, retries=10):
-    for _ in range(retries):
-        try:
-            response = requests.get(url)
-            response.raise_for_status()
-            break
-        except Exception as e:
-            print(f"Error fetching {url}: {e}")
+def get_xml(url):
+    response = requests.get(url)
+    response.raise_for_status()
     tree = ElementTree.fromstring(response.content)
     return tree
 
@@ -90,9 +86,6 @@ def main():
                     # Save every iteration.
                     with open("catalog.json", "w") as fp:
                         json.dump(all_courses, fp, indent=4)
-
-                    if count == 100:
-                        return
 
 
 if __name__ == "__main__":

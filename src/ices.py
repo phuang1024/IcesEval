@@ -11,20 +11,24 @@ import re
 from utils import *
 
 
-def parse_text(text_path):
-    with open(text_path, "r") as fp:
+def parse_text(pdf_path):
+    os.system(f"pdftotext -layout {pdf_path} ices.txt")
+    with open("ices.txt", "r") as fp:
         lines = fp.readlines()
+
+    with open("subjects.json", "r") as fp:
+        subjects = json.load(fp)
 
     start_i = 0
     while True:
         if start_i >= len(lines):
             raise ValueError("Reached end without finding start.")
-        # TODO assumes first major is Accountancy.
+        # TODO assumes first subject is Accountancy.
         if lines[start_i].strip().lower() == "accountancy":
             break
         start_i += 1
 
-    major = None
+    subject = None
     for index in range(start_i, len(lines)):
         line = lines[index].replace(",", " ").strip().lower()
         if not line:
@@ -36,14 +40,13 @@ def parse_text(text_path):
             if re.search(r"\d\d\d\d", line):
                 continue
 
-        # Major.
+        # Subject
         if not any(x.isdigit() for x in words):
-            major = line
-            print(f"Found major: {major}")
+            subject = line
             continue
 
         # Professor.
-        assert major is not None
+        assert subject is not None
         if len(words) >= 3:
             i = 0
             outstanding = words[0] == "*"
@@ -63,7 +66,12 @@ def parse_text(text_path):
 
             courses = " ".join(words[i:])
 
-            yield (major, first, last, courses, ta, outstanding)
+            full_subj = search_subject(subjects, subject)
+            if full_subj is None:
+                print(f"Unknown subject: {subject}")
+                continue
+
+            yield (full_subj[0], first, last, courses, ta, outstanding)
 
 
 def main():
@@ -73,7 +81,6 @@ def main():
     parser.add_argument("--ices")
     args = parser.parse_args()
 
-    os.system(f"pdftotext -layout {args.ices} ices.txt")
     with open(args.in_json, "r") as fp:
         data = json.load(fp)
 
@@ -82,7 +89,7 @@ def main():
         for i in range(len(data)):
             entry = data[i]
             equal = True
-            if not str_eq(entry["subject"], rating[0]):
+            if not str_eq(entry["long_subject"], rating[0]):
                 equal = False
             for first, last in entry["instructors"]:
                 if str_eq(last, rating[2]):

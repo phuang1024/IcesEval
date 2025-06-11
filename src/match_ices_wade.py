@@ -16,6 +16,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ices")
     parser.add_argument("--wade")
+    parser.add_argument("-o", "--output")
     args = parser.parse_args()
 
     ices_data = list(parse_text(args.ices))
@@ -45,7 +46,7 @@ def main():
                 entry["TA"] = rating[4]
                 break
 
-    with open("wade_ices_matched.json", "w") as fp:
+    with open(args.output, "w") as fp:
         json.dump(wade_data, fp, indent=2)
 
 

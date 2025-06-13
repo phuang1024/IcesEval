@@ -46,7 +46,7 @@ def get_xml(url, use_cache=True):
     return tree
 
 
-def step(base_url, cache, year, season) -> dict:
+def step(base_url, cache) -> dict | None:
     """
     Get the next section entry.
 
@@ -54,6 +54,7 @@ def step(base_url, cache, year, season) -> dict:
 
     Returns data for the section:
         subject_code, course_num, instr_last, instr_first, crn
+    OR returns None, if there was an error.
     """
     base_xml = get_xml(base_url)
     subjects = base_xml.find("subjects")
@@ -67,17 +68,31 @@ def step(base_url, cache, year, season) -> dict:
     sections = course_xml.find("sections")
 
     crn = sections[cache["section_index"]].attrib["id"]
-    section_xml = get_xml(sections[cache["section_index"]].attrib["href"], use_cache=False)
+    # Sometimes section URL has an error.
+    section_url = sections[cache["section_index"]].attrib["href"]
+    if "courses.illinois.edu" in section_url:
+        section_xml = get_xml(section_url, use_cache=False)
 
-    instructors = section_xml.find("meetings")[0].find("instructors")
-    if len(instructors) == 0:
-        instr_first = ""
-        instr_last = ""
+        instructors = section_xml.find("meetings")[0].find("instructors")
+        if len(instructors) == 0:
+            instr_first = ""
+            instr_last = ""
+        else:
+            # TODO assuming last instructor is primary.
+            instr = instructors[-1]
+            instr_first = instr.attrib["firstName"]
+            instr_last = instr.attrib["lastName"]
+
+        ret = {
+            "Subject": subject_code,
+            "Course": course_num,
+            "InstrLast": instr_last,
+            "InstrFirst": instr_first,
+            "CRN": crn,
+        }
+
     else:
-        # TODO assuming last instructor is primary.
-        instr = instructors[-1]
-        instr_first = instr.attrib["firstName"]
-        instr_last = instr.attrib["lastName"]
+        ret = None
 
     # Increment cache indices.
     cache["section_index"] += 1
@@ -88,13 +103,7 @@ def step(base_url, cache, year, season) -> dict:
             cache["course_index"] = 0
             cache["subject_index"] += 1
 
-    return {
-        "Subject": subject_code,
-        "Course": course_num,
-        "InstrLast": instr_last,
-        "InstrFirst": instr_first,
-        "CRN": crn,
-    }
+    return ret
 
 
 def main():
@@ -129,7 +138,10 @@ def main():
     num_subjects = len(get_xml(base_url).find("subjects"))
 
     while True:
-        entry = step(base_url, cache, args.year, args.season)
+        entry = step(base_url, cache)
+        if entry is None:
+            print("Error scraping (returned None), cache:", cache)
+            continue
         print(f"Scraped: {entry}")
 
         # Write to output CSV.

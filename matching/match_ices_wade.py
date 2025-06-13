@@ -14,16 +14,17 @@ from utils import *
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--ices")
-    parser.add_argument("--wade")
-    parser.add_argument("-o", "--output")
+    parser.add_argument("--ices", required=True)
+    parser.add_argument("--wade", required=True)
+    parser.add_argument("-o", "--output", required=True)
+    parser.add_argument("--logfile")
     args = parser.parse_args()
 
     ices_data = list(parse_text(args.ices))
     with open(args.wade, "r", newline="") as fp:
         wade_data = list(csv.DictReader(fp))
 
-    for entry in tqdm(wade_data):
+    for entry in wade_data:
         entry["ICES"] = "NONE"
         entry["TA"] = False
 

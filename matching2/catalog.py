@@ -33,6 +33,12 @@ def get_xml(url, use_cache=True):
     """
     Section XMLs are not cached because they are numerous, and only used once.
     """
+    # Fix occasional problems with URLs.
+    if "cis.local" in url:
+        url = url.replace("cis.local", "courses.illinois.edu")
+        url = url.replace("cisapi", "cisapp/explorer")
+        url = url + ".xml"
+
     if use_cache and url in XML_CACHE:
         return XML_CACHE[url]
 
@@ -68,31 +74,17 @@ def step(base_url, cache) -> dict | None:
     sections = course_xml.find("sections")
 
     crn = sections[cache["section_index"]].attrib["id"]
-    # Sometimes section URL has an error.
-    section_url = sections[cache["section_index"]].attrib["href"]
-    if "courses.illinois.edu" in section_url:
-        section_xml = get_xml(section_url, use_cache=False)
+    section_xml = get_xml(sections[cache["section_index"]].attrib["href"], use_cache=False)
 
-        instructors = section_xml.find("meetings")[0].find("instructors")
-        if len(instructors) == 0:
-            instr_first = ""
-            instr_last = ""
-        else:
-            # TODO assuming last instructor is primary.
-            instr = instructors[-1]
-            instr_first = instr.attrib["firstName"]
-            instr_last = instr.attrib["lastName"]
-
-        ret = {
-            "Subject": subject_code,
-            "Course": course_num,
-            "InstrLast": instr_last,
-            "InstrFirst": instr_first,
-            "CRN": crn,
-        }
-
+    instructors = section_xml.find("meetings")[0].find("instructors")
+    if len(instructors) == 0:
+        instr_first = ""
+        instr_last = ""
     else:
-        ret = None
+        # TODO assuming last instructor is primary.
+        instr = instructors[-1]
+        instr_first = instr.attrib["firstName"]
+        instr_last = instr.attrib["lastName"]
 
     # Increment cache indices.
     cache["section_index"] += 1
@@ -103,7 +95,13 @@ def step(base_url, cache) -> dict | None:
             cache["course_index"] = 0
             cache["subject_index"] += 1
 
-    return ret
+    return {
+        "Subject": subject_code,
+        "Course": course_num,
+        "InstrLast": instr_last,
+        "InstrFirst": instr_first,
+        "CRN": crn,
+    }
 
 
 def main():
@@ -140,9 +138,9 @@ def main():
     while True:
         entry = step(base_url, cache)
         if entry is None:
-            print("Error scraping (returned None), cache:", cache)
+            print("Error scraping (returned None), cache:", cache, flush=True)
             continue
-        print(f"Scraped: {entry}")
+        print(f"Scraped: {entry}", flush=True)
 
         # Write to output CSV.
         if os.path.isfile(args.output):
@@ -158,7 +156,7 @@ def main():
 
         # Check if done.
         if cache["subject_index"] >= num_subjects:
-            print("Done.")
+            print("Done.", flush=True)
             break
 
 

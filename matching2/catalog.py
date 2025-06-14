@@ -13,6 +13,9 @@ Cache format:
 - In Subject, index of current course.
 - In Term, index of current section.
 These indices are the *next* entry to scrape.
+
+Instructors format:
+First1,Last1;First2,Last2;
 """
 
 import argparse
@@ -76,15 +79,9 @@ def step(base_url, cache) -> dict | None:
     crn = sections[cache["section_index"]].attrib["id"]
     section_xml = get_xml(sections[cache["section_index"]].attrib["href"], use_cache=False)
 
-    instructors = section_xml.find("meetings")[0].find("instructors")
-    if len(instructors) == 0:
-        instr_first = ""
-        instr_last = ""
-    else:
-        # TODO assuming last instructor is primary.
-        instr = instructors[-1]
-        instr_first = instr.attrib["firstName"]
-        instr_last = instr.attrib["lastName"]
+    instr_string = ""
+    for instr in section_xml.find("meetings")[0].find("instructors"):
+        instr_string += instr.attrib["firstName"] + "," + instr.attrib["lastName"] + ";"
 
     # Increment cache indices.
     cache["section_index"] += 1
@@ -98,8 +95,7 @@ def step(base_url, cache) -> dict | None:
     return {
         "Subject": subject_code,
         "Course": course_num,
-        "InstrLast": instr_last,
-        "InstrFirst": instr_first,
+        "Instructors": instr_string,
         "CRN": crn,
     }
 

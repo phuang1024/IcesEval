@@ -21,6 +21,7 @@ First1,Last1;First2,Last2;
 import argparse
 import json
 import os
+from threading import Thread
 from xml.etree import ElementTree
 
 import requests
@@ -55,7 +56,23 @@ def get_xml(url, use_cache=True):
     return tree
 
 
-def step(base_url, cache) -> dict | None:
+def step_section(rets, i, section_tag, subject_code, course_num) -> dict:
+    crn = section_tag.attrib["id"]
+    section_xml = get_xml(section_tag.attrib["href"], use_cache=False)
+
+    instr_string = ""
+    for instr in section_xml.find("meetings")[0].find("instructors"):
+        instr_string += instr.attrib["firstName"] + "," + instr.attrib["lastName"] + ";"
+
+    rets[i] = {
+        "Subject": subject_code,
+        "Course": course_num,
+        "Instructors": instr_string,
+        "CRN": crn,
+    }
+
+
+def step(base_url, cache) -> list[dict]:
     """
     Get the next section entry.
 
@@ -76,28 +93,23 @@ def step(base_url, cache) -> dict | None:
     course_xml = get_xml(courses[cache["course_index"]].attrib["href"])
     sections = course_xml.find("sections")
 
-    crn = sections[cache["section_index"]].attrib["id"]
-    section_xml = get_xml(sections[cache["section_index"]].attrib["href"], use_cache=False)
-
-    instr_string = ""
-    for instr in section_xml.find("meetings")[0].find("instructors"):
-        instr_string += instr.attrib["firstName"] + "," + instr.attrib["lastName"] + ";"
+    threads = []
+    rets = [None] * len(sections)
+    for i in range(len(sections)):
+        thread = Thread(target=step_section, args=(rets, i, sections[i], subject_code, course_num))
+        thread.start()
+        threads.append(thread)
+    for thread in threads:
+        thread.join()
 
     # Increment cache indices.
-    cache["section_index"] += 1
-    if cache["section_index"] >= len(sections):
-        cache["section_index"] = 0
-        cache["course_index"] += 1
-        if cache["course_index"] >= len(courses):
-            cache["course_index"] = 0
-            cache["subject_index"] += 1
+    cache["section_index"] = 0
+    cache["course_index"] += 1
+    if cache["course_index"] >= len(courses):
+        cache["course_index"] = 0
+        cache["subject_index"] += 1
 
-    return {
-        "Subject": subject_code,
-        "Course": course_num,
-        "Instructors": instr_string,
-        "CRN": crn,
-    }
+    return rets
 
 
 def main():
@@ -105,7 +117,7 @@ def main():
     parser.add_argument("--output", required=True, help="Output CSV.")
     parser.add_argument("--year", required=True)
     parser.add_argument("--season", required=True, help="Short season name.")
-    parser.add_argument("--force-restart", action="store_true")
+    parser.add_argument("--force_restart", action="store_true")
     args = parser.parse_args()
 
     base_url = f"https://courses.illinois.edu/cisapp/explorer/schedule/{args.year}/{long_season_name(args.season)}.xml"
@@ -127,23 +139,19 @@ def main():
     if os.path.isfile(args.output):
         data = read_csv(args.output)
         print(f"Resuming to {args.output}. Current length: {len(data)}")
+    else:
+        data = []
 
     # Get total number of subjects.
     num_subjects = len(get_xml(base_url).find("subjects"))
 
     while True:
-        entry = step(base_url, cache)
-        if entry is None:
-            print("Error scraping (returned None), cache:", cache, flush=True)
-            continue
-        print(f"Scraped: {entry}", flush=True)
+        entries = step(base_url, cache)
+        for e in entries:
+            print(f"Scraped: {e}", flush=True)
 
         # Write to output CSV.
-        if os.path.isfile(args.output):
-            data = read_csv(args.output)
-        else:
-            data = []
-        data.append(entry)
+        data.extend(entries)
         write_csv(args.output, data)
 
         # Save cache.

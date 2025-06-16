@@ -21,6 +21,7 @@ First1,Last1;First2,Last2;
 import argparse
 import json
 import os
+import time
 from threading import Thread
 from xml.etree import ElementTree
 
@@ -46,8 +47,15 @@ def get_xml(url, use_cache=True):
     if use_cache and url in XML_CACHE:
         return XML_CACHE[url]
 
-    response = requests.get(url)
-    response.raise_for_status()
+    while True:
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            break
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching {url}: {e}. Retrying...")
+            time.sleep(1)
+
     tree = ElementTree.fromstring(response.content)
 
     if use_cache:
@@ -151,7 +159,9 @@ def main():
             print(f"Scraped: {e}", flush=True)
 
         # Write to output CSV.
-        data.extend(entries)
+        for e in entries:
+            if e is not None:
+                data.append(e)
         write_csv(args.output, data)
 
         # Save cache.

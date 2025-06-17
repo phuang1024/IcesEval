@@ -12,6 +12,9 @@ ICES=http://citl.illinois.edu/docs/default-source/teachers-ranked-as-excellent/
 WADE=https://raw.githubusercontent.com/wadefagen/datasets/refs/heads/master/gpa/raw/
 
 function download_ices() {
+    mkdir -p ices
+    cd ices
+
     down ${ICES}tre-2023-spring.pdf ices_sp2023.pdf
     down ${ICES}tre-2022-fall.pdf   ices_fa2022.pdf
     down ${ICES}tre-2022-spring.pdf ices_sp2022.pdf
@@ -39,9 +42,14 @@ function download_ices() {
     down ${ICES}spring11list.pdf    ices_sp2011.pdf
     down https://citl.illinois.edu/docs/default-source/ices-documents/lists-of-teachers-ranked-as-excellent/fall10list.pdf?sfvrsn=2  ices_fa2010.pdf
     down ${ICES}spring10list.pdf    ices_sp2010.pdf
+
+    cd ..
 }
 
 function download_wade() {
+    mkdir -p wade
+    cd wade
+
     down ${WADE}sp2023.csv wade_sp2023.csv
     down ${WADE}fa2022.csv wade_fa2022.csv
     down ${WADE}sp2022.csv wade_sp2022.csv
@@ -69,14 +77,18 @@ function download_wade() {
     down ${WADE}sp2011.csv wade_sp2011.csv
     down ${WADE}fa2010.csv wade_fa2010.csv
     down ${WADE}sp2010.csv wade_sp2010.csv
+
+    cd ..
 }
 
 function clean_wade() {
+    cd wade
     for f in *.csv; do
         echo "Cleaning $f"
         iconv -f utf-8 -t utf-8 -c $f > /tmp/a.csv || true
         mv /tmp/a.csv $f
     done
+    cd ..
 }
 
 

@@ -1,3 +1,10 @@
+"""
+Parse wade dataset.
+
+Running this file will only print stats.
+Use "matching.py" to generate the output matched file.
+"""
+
 import argparse
 
 from utils import *
@@ -34,13 +41,40 @@ def parse_wade(file):
     return ret
 
 
+def match_to_wade(wade_entry, catalog_data):
+    """
+    Find entry in catalog that matches given wade entry.
+
+    returns (bool, bool, obj):
+        First (bool) is whether a match was found by CRN.
+        Second (bool) is whether all attributes match (if first is true).
+        Third is the dict entry, or None, depending on if match was found via CRN.
+    """
+    # Match by CRN
+    for catalog_entry in catalog_data:
+        if wade_entry["CRN"] == catalog_entry["CRN"]:
+            break
+    else:
+        return False, False, None
+
+    # Verify all attributes.
+    attr_match = False
+    if (wade_entry["Subject"] == catalog_entry["Subject"]
+            and wade_entry["Course"] == catalog_entry["Course"]):
+        if match_all_instructors((wade_entry["InstrFirst"], wade_entry["InstrLast"]),
+                                 parse_instructors(catalog_entry["Instructors"])):
+            attr_match = True
+
+    return True, attr_match, catalog_entry
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--input", required=True, help="Input Wade CSV.")
+    parser.add_argument("--wade", required=True, help="Input Wade CSV.")
     parser.add_argument("--catalog", required=True, help="Input catalog CSV.")
     args = parser.parse_args()
 
-    wade_data = parse_wade(args.input)
+    wade_data = parse_wade(args.wade)
     catalog_data = read_csv(args.catalog)
 
     print("Matching catalog and Wade.")
@@ -51,25 +85,16 @@ def main():
     matched = 0
 
     for wade_entry in wade_data:
-        # Match by CRN
-        for catalog_entry in catalog_data:
-            if wade_entry["CRN"] == catalog_entry["CRN"]:
-                break
-        else:
+        match, attr_match, obj = match_to_wade(wade_entry, catalog_data)
+        if not match:
             print("No match for Wade entry:", wade_entry)
             no_match += 1
-            continue
-
-        # Verify all attributes.
-        if (wade_entry["Subject"] == catalog_entry["Subject"]
-                and wade_entry["Course"] == catalog_entry["Course"]
-                and wade_entry["InstrLast"].lower() == catalog_entry["InstrLast"].lower()
-                and wade_entry["InstrFirst"].lower() == catalog_entry["InstrFirst"].lower()):
-            matched += 1
-        else:
+        elif not attr_match:
             print("Attributes mismatch for Wade entry:", wade_entry)
-            print("    Catalog entry:                 ", catalog_entry)
+            print("    Catalog entry:                 ", obj)
             attrs_wrong += 1
+        else:
+            matched += 1
 
     print("Stats (matching Wade to catalog):")
     print(f"  Total Wade entries: {len(wade_data)}")

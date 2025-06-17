@@ -47,15 +47,8 @@ def get_xml(url, use_cache=True):
     if use_cache and url in XML_CACHE:
         return XML_CACHE[url]
 
-    while True:
-        try:
-            response = requests.get(url)
-            response.raise_for_status()
-            break
-        except requests.exceptions.RequestException as e:
-            print(f"Error fetching {url}: {e}. Retrying...")
-            time.sleep(1)
-
+    response = requests.get(url)
+    response.raise_for_status()
     tree = ElementTree.fromstring(response.content)
 
     if use_cache:
@@ -64,9 +57,14 @@ def get_xml(url, use_cache=True):
     return tree
 
 
-def step_section(rets, i, section_tag, subject_code, course_num) -> dict:
+def step_section(rets, i, section_tag, subject_code, course_num) -> dict | None:
     crn = section_tag.attrib["id"]
-    section_xml = get_xml(section_tag.attrib["href"], use_cache=False)
+    section_url = section_tag.attrib["href"]
+    try:
+        section_xml = get_xml(section_url, use_cache=False)
+    except requests.exceptions.HTTPError as e:
+        print(f"Error fetching section {section_url}: {e}", flush=True)
+        return None
 
     instr_string = ""
     for instr in section_xml.find("meetings")[0].find("instructors"):
@@ -80,7 +78,7 @@ def step_section(rets, i, section_tag, subject_code, course_num) -> dict:
     }
 
 
-def step(base_url, cache) -> list[dict]:
+def step(base_url, cache) -> list[dict | None]:
     """
     Get the next section entry.
 

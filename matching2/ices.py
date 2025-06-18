@@ -67,10 +67,10 @@ def parse_ices(pdf_path):
 
         # Subject
         if not any(x.isdigit() for x in words):
+            line_clean = line.lower().translate(str.maketrans("", "", string.punctuation + " "))
             for subject in subjects:
-                line = line.lower().translate(str.maketrans("", "", string.punctuation + " "))
                 name = subject[1].lower().translate(str.maketrans("", "", string.punctuation + " "))
-                if line in name or name in line:
+                if line_clean in name or name in line_clean:
                     break
             else:
                 subject = None
@@ -109,21 +109,22 @@ def parse_ices(pdf_path):
                 }
 
 
-def match_to_ices(ices_entry, catalog_data) -> dict | None:
+def match_to_ices(ices_entry, catalog_data) -> list[int]:
     """
-    Find entry in catalog that matches given ICES entry.
+    Find entries in catalog that matches given ICES entry.
+    Returns indices of matching entries in catalog_data.
     """
     courses = ices_entry["Courses"].split(";")
 
-    for catalog_entry in catalog_data:
-        if catalog_entry["Subject"] == ices_entry["Subject"]:
-            if catalog_entry["Course"] in courses:
-                if match_all_instructors(
-                        (ices_entry["InstrFirst"], ices_entry["InstrLast"]),
-                        parse_instructors(catalog_entry["Instructors"])):
-                    return catalog_entry
+    ret = []
+    for i, catalog_entry in enumerate(catalog_data):
+        if catalog_entry["Course"] in courses:
+            if match_all_instructors(
+                    (ices_entry["InstrFirst"], ices_entry["InstrLast"]),
+                    parse_instructors(catalog_entry["Instructors"])):
+                ret.append(i)
 
-    return None
+    return ret
 
 
 def main():
@@ -155,13 +156,13 @@ def main():
 
         for ices_entry in ices_data:
             match = match_to_ices(ices_entry, catalog_data)
-            if match is None:
+            if len(match) == 0:
                 print("No match for ICES entry:", ices_entry)
                 no_match += 1
             else:
                 matched += 1
 
-        print("Stats (matching Wade to catalog):")
+        print("Stats (matching ICES to catalog):")
         print(f"  Total ICES entries: {len(ices_data)}")
         print(f"  Total catalog entries: {len(catalog_data)}")
         print(f"  No match: {no_match}")

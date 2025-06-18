@@ -1,5 +1,8 @@
 """
-Parse wade dataset.
+Parse and match Wade dataset.
+
+Wade dataset contains CRNs, so they can be unambiguously matched to catalog.
+We still check the other attributes (instructor, course number).
 
 Running this file will only print stats.
 Use "matching.py" to generate the output matched file.
@@ -61,8 +64,9 @@ def match_to_wade(wade_entry, catalog_data):
     attr_match = False
     if (wade_entry["Subject"] == catalog_entry["Subject"]
             and wade_entry["Course"] == catalog_entry["Course"]):
-        if match_all_instructors((wade_entry["InstrFirst"], wade_entry["InstrLast"]),
-                                 parse_instructors(catalog_entry["Instructors"])):
+        if match_all_instructors(
+                (wade_entry["InstrFirst"], wade_entry["InstrLast"]),
+                parse_instructors(catalog_entry["Instructors"])):
             attr_match = True
 
     return True, attr_match, catalog_entry

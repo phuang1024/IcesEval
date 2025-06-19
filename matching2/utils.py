@@ -18,9 +18,15 @@ def short_season_name(s):
     raise ValueError(f"Unknown season: {s}")
 
 
-def write_csv(file, data: list[dict]):
+def write_csv(file, data: list[dict], fieldnames=None):
+    """
+    fieldnames: If None, use the keys of the first dictionary in `data`.
+    """
+    if fieldnames is None:
+        fieldnames = data[0].keys()
+
     with open(file, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=data[0].keys())
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(data)
 

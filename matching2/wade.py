@@ -32,6 +32,7 @@ def parse_wade(file):
             last = ""
             first = ""
 
+        print(entry.keys())
         ret.append({
             "Subject": entry[subj_key],
             "Course": entry[course_key],

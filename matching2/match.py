@@ -100,7 +100,13 @@ def main():
 
     # Write output.
     print("Writing output to", args.output)
-    write_csv(args.output, catalog)
+    # Make fieldnames.
+    fieldnames = set(catalog[0].keys())
+    fieldnames.add("ICESExcellent")
+    fieldnames.add("ICESOutstanding")
+    fieldnames.add("ICESTA")
+    fieldnames.add("WadeGPA")
+    write_csv(args.output, catalog, fieldnames=list(fieldnames))
 
 
 if __name__ == "__main__":

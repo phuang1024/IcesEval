@@ -48,13 +48,13 @@ def match_to_wade(wade_entry, catalog_data):
     """
     Find entry in catalog that matches given wade entry.
 
-    returns (bool, bool, obj):
+    returns (bool, bool, int):
         First (bool) is whether a match was found by CRN.
         Second (bool) is whether all attributes match (if first is true).
-        Third is the dict entry, or None, depending on if match was found via CRN.
+        Third is the index of catalog entry, or None, depending on if match was found via CRN.
     """
     # Match by CRN
-    for catalog_entry in catalog_data:
+    for i, catalog_entry in enumerate(catalog_data):
         if wade_entry["CRN"] == catalog_entry["CRN"]:
             break
     else:
@@ -69,7 +69,7 @@ def match_to_wade(wade_entry, catalog_data):
                 parse_instructors(catalog_entry["Instructors"])):
             attr_match = True
 
-    return True, attr_match, catalog_entry
+    return True, attr_match, i
 
 
 def main():
@@ -89,13 +89,13 @@ def main():
     matched = 0
 
     for wade_entry in wade_data:
-        match, attr_match, obj = match_to_wade(wade_entry, catalog_data)
+        match, attr_match, index = match_to_wade(wade_entry, catalog_data)
         if not match:
             print("No match for Wade entry:", wade_entry)
             no_match += 1
         elif not attr_match:
             print("Attributes mismatch for Wade entry:", wade_entry)
-            print("    Catalog entry:                 ", obj)
+            print("    Catalog entry:                 ", catalog_data[index])
             attrs_wrong += 1
         else:
             matched += 1

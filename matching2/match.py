@@ -34,28 +34,6 @@ def main():
     print(f"  Total entries: {len(catalog)}")
     print()
 
-    # Match ICES.
-    ices = read_csv(args.ices)
-    not_matched = []
-    for i, ices_entry in enumerate(ices):
-        match = match_to_ices(ices_entry, catalog)
-        if len(match) > 0:
-            for catalog_i in match:
-                catalog[catalog_i]["ICESExcellent"] = True
-                catalog[catalog_i]["ICESOutstanding"] = ices_entry["Outstanding"]
-                catalog[catalog_i]["ICESTA"] = ices_entry["TA"]
-        else:
-            not_matched.append(i)
-
-    # Print ICES stats.
-    print("ICES:")
-    print(f"  Total entries: {len(ices)}")
-    print(f"  Matched: {len(ices) - len(not_matched)}")
-    print(f"  Not matched: {len(not_matched)}")
-    print(f"    Not matched indices in ICES:")
-    print(f"      ", " ".join(map(str, not_matched)), sep="")
-    print()
-
     # Match Wade.
     wade = parse_wade(args.wade)
     not_matched = []
@@ -73,6 +51,39 @@ def main():
     print(f"  Not matched: {len(not_matched)}")
     print(f"    Not matched indices in Wade:")
     print(f"      ", " ".join(map(str, not_matched)), sep="")
+    print()
+
+    # Match ICES.
+    ices = read_csv(args.ices)
+    not_matched = []
+    # ICES entries that have no corresponding Wade entry.
+    no_wade = []
+    for i, ices_entry in enumerate(ices):
+        match = match_to_ices(ices_entry, catalog)
+        if len(match) > 0:
+            has_wade = False
+            for catalog_i in match:
+                catalog[catalog_i]["ICESExcellent"] = True
+                catalog[catalog_i]["ICESOutstanding"] = ices_entry["Outstanding"]
+                catalog[catalog_i]["ICESTA"] = ices_entry["TA"]
+                if "WadeGPA" in catalog[catalog_i]:
+                    has_wade = True
+            if not has_wade:
+                no_wade.append(i)
+
+        else:
+            not_matched.append(i)
+
+    # Print ICES stats.
+    print("ICES:")
+    print(f"  Total entries: {len(ices)}")
+    print(f"  Matched: {len(ices) - len(not_matched)}")
+    print(f"  Not matched: {len(not_matched)}")
+    print(f"    Not matched indices in ICES:")
+    print(f"      ", " ".join(map(str, not_matched)), sep="")
+    print(f"  No matching Wade entry: {len(no_wade)}")
+    print(f"    No matching Wade indices in ICES:")
+    print(f"      ", " ".join(map(str, no_wade)), sep="")
     print()
 
     # Compute intersection stats.

@@ -12,7 +12,7 @@ gpa_norate = []
 gpa_rate = []
 for entry in data:
     if entry["WadeGPA"]:
-        if entry["ICESExcellent"] == "True":
+        if entry["ICESRating"] != "NONE":
             gpa_rate.append(float(entry["WadeGPA"]))
         else:
             gpa_norate.append(float(entry["WadeGPA"]))

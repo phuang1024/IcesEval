@@ -11,6 +11,6 @@ for year in {2010..2022}; do
             --ices ../data/ices/ices_${season}${year}.csv \
             --wade ../data/wade/wade_${season}${year}.csv \
             --output ../data/match/match_${season}${year}.csv \
-            > ../data/match/match_${season}${year}.log 2>&1
+            > ../data/match/match_${season}${year}.log 2>&1 || echo "  Error!"
     done
 done

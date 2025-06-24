@@ -54,6 +54,9 @@ def main():
     print()
 
     # Match ICES.
+    # First, initialize ICESRating field.
+    for entry in catalog:
+        entry["ICESRating"] = "NONE"
     ices = read_csv(args.ices)
     not_matched = []
     # ICES entries that have no corresponding Wade entry.
@@ -63,8 +66,7 @@ def main():
         if len(match) > 0:
             has_wade = False
             for catalog_i in match:
-                catalog[catalog_i]["ICESExcellent"] = True
-                catalog[catalog_i]["ICESOutstanding"] = ices_entry["Outstanding"]
+                catalog[catalog_i]["ICESRating"] = "OUTSTANDING" if ices_entry["Outstanding"] == "True" else "EXCELLENT"
                 catalog[catalog_i]["ICESTA"] = ices_entry["TA"]
                 if "WadeGPA" in catalog[catalog_i]:
                     has_wade = True
@@ -92,11 +94,12 @@ def main():
     only_wade = 0
     both = 0
     for entry in catalog:
-        if "ICESExcellent" not in entry and "WadeGPA" not in entry:
+        ices_rated = entry["ICESRating"] != "NONE"
+        if not ices_rated and "WadeGPA" not in entry:
             nothing += 1
-        elif "ICESExcellent" in entry and "WadeGPA" not in entry:
+        elif ices_rated and "WadeGPA" not in entry:
             only_ices += 1
-        elif "ICESExcellent" not in entry and "WadeGPA" in entry:
+        elif not ices_rated and "WadeGPA" in entry:
             only_wade += 1
         else:
             both += 1
@@ -113,8 +116,7 @@ def main():
     print("Writing output to", args.output)
     # Make fieldnames.
     fieldnames = set(catalog[0].keys())
-    fieldnames.add("ICESExcellent")
-    fieldnames.add("ICESOutstanding")
+    fieldnames.add("ICESRating")
     fieldnames.add("ICESTA")
     fieldnames.add("WadeGPA")
     write_csv(args.output, catalog, fieldnames=list(fieldnames))

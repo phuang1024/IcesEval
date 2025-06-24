@@ -101,7 +101,7 @@ def parse_ices(pdf_path):
             if subject is not None:
                 yield {
                     "Subject": subject[0],
-                    "InstrFirst": first,
+                    "InstrFirst": first[0],
                     "InstrLast": last,
                     "TA": ta,
                     "Courses": courses,

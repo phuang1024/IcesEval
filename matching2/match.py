@@ -35,12 +35,20 @@ def main():
     print()
 
     # Match Wade.
+    # First, initialize WadeGPA field.
+    for entry in catalog:
+        entry["WadeGPA"] = "NONE"
     wade = parse_wade(args.wade)
     not_matched = []
     for i, wade_entry in enumerate(wade):
         match, _, catalog_i = match_to_wade(wade_entry, catalog)
         if match:
-            catalog[catalog_i]["WadeGPA"] = wade_entry["GPA"]
+            try:
+                # Only add valid GPA entries.
+                gpa = float(wade_entry["GPA"])
+                catalog[catalog_i]["WadeGPA"] = wade_entry["GPA"]
+            except ValueError:
+                pass
         else:
             not_matched.append(i)
 

@@ -39,6 +39,36 @@ if False:
     print(f"All matches: {len(DATA_ALL)} matches")
 
 
+
+# Sanity check: Rating frequency, separated by whether Wade entry exists.
+def rating_freq_sanity_check():
+    wade_total = 0
+    wade_count = 0
+    nowade_total = 0
+    nowade_count = 0
+    for entry in DATA_ALL:
+        if entry["WadeGPA"] != "NONE":
+            wade_total += 1
+            if entry["ICESRating"] != "NONE":
+                wade_count += 1
+        else:
+            nowade_total += 1
+            if entry["ICESRating"] != "NONE":
+                nowade_count += 1
+
+    wade_freq = wade_count / wade_total if wade_total > 0 else 0
+    nowade_freq = nowade_count / nowade_total if nowade_total > 0 else 0
+    print(f"Wade entries: {wade_total} total, {wade_count} rated ({wade_freq:.2%})")
+    print(f"No Wade entries: {nowade_total} total, {nowade_count} rated ({nowade_freq:.2%})")
+
+    plt.clf()
+    plt.bar(["Yes", "No"], [wade_freq, nowade_freq], color=['blue', 'orange'], alpha=0.7)
+    plt.xlabel("GPA Data Exists?")
+    plt.ylabel("Frequency")
+    plt.title("Rating Frequency by GPA Data Status")
+    plt.show()
+
+
 # GPA vs rating
 def gpa_vs_rating():
     gpa_norate = []
@@ -337,4 +367,4 @@ def stats_by_season():
     plt.show()
 
 
-stats_by_year()
+rating_freq_sanity_check()

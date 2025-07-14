@@ -8,6 +8,7 @@ import argparse
 import time
 
 from google.genai import Client
+from google.genai.errors import ClientError
 from tqdm import tqdm
 
 from utils import *
@@ -31,6 +32,7 @@ def guess_gender(names, token):
         model="gemini-2.5-pro",
         contents=prompt,
     )
+
     results = []
     for line in r.text.strip().split("\n"):
         if line.strip() == "Last,First,Gender":
@@ -79,7 +81,15 @@ def main():
 
         print(f"Total remain: {total_remain}, batch size: {len(names)}")
 
-        genders = guess_gender(names, token)
+        try:
+            genders = guess_gender(names, token)
+        except AssertionError as e:
+            print(e)
+            continue
+        except ClientError as e:
+            print(e)
+            time.sleep(10)
+            continue
 
         # Update results.
         for i in range(len(data)):
@@ -90,12 +100,12 @@ def main():
             # Find corresponding in genders.
             gender = "NONE"
             for g in genders:
-                if entry["Last"] == g["Last"] and entry["First"] == g["First"]:
-                    gender = g["Gender"]
+                if entry["Last"] == g[0] and entry["First"] == g[1]:
+                    gender = g[2]
                     break
 
             if gender != "NONE":
-                entry[i]["Gender"] = gender
+                data[i]["Gender"] = gender
 
         write_csv(args.file, data)
 

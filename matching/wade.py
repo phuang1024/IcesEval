@@ -18,9 +18,10 @@ def parse_wade(file):
     for entry in read_csv(file):
         # Keys change across years.
         for key in entry.keys():
-            if key.lower().strip() in ("subject", "course subject"):
+            name = key.strip("\ufeff").strip().lower()
+            if name in ("subject", "course subject"):
                 subj_key = key
-            elif key.lower().strip() in ("course", "course number"):
+            elif name in ("course", "course number"):
                 course_key = key
 
         names = entry["Primary Instructor"].lower().split(", ")

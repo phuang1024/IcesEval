@@ -17,6 +17,8 @@ def main():
     parser.add_argument("--catalog", required=True, help="Catalog csv")
     parser.add_argument("--ices", required=True, help="ICES csv")
     parser.add_argument("--wade", required=True, help="Wade csv")
+    parser.add_argument("--graybook", required=True, help="Graybook csv")
+    parser.add_argument("--year", required=True, help="Year (used to filter graybook)")
     parser.add_argument("-o", "--output", required=True, help="Output csv file")
     args = parser.parse_args()
 
@@ -47,6 +49,9 @@ def main():
                 # Only add valid GPA entries.
                 gpa = float(wade_entry["GPA"])
                 catalog[catalog_i]["WadeGPA"] = wade_entry["GPA"]
+                # Write Wade instructor; assume this is the primary instructor.
+                catalog[catalog_i]["WadeInstrFirst"] = wade_entry["InstrFirst"]
+                catalog[catalog_i]["WadeInstrLast"] = wade_entry["InstrLast"]
             except ValueError:
                 pass
         else:
@@ -96,6 +101,39 @@ def main():
     print(f"      ", " ".join(map(str, no_wade)), sep="")
     print()
 
+    # Match graybook.
+    # First, initialize Gender field.
+    for entry in catalog:
+        entry["Gender"] = "NONE"
+
+    graybook = []
+    for entry in read_csv(args.graybook):
+        if entry["Year"] == args.year:
+            graybook.append(entry)
+
+    match_count = 0
+    for catalog_i, entry in enumerate(catalog):
+        if not "WadeInstrFirst" in entry:
+            continue
+
+        for gray_entry in graybook:
+            match = match_instructor(
+                (entry["WadeInstrFirst"], entry["WadeInstrLast"]),
+                (gray_entry["First"][0], gray_entry["Last"])
+            )
+            if match >= 1:
+                catalog[catalog_i]["Gender"] = gray_entry["Gender"]
+                catalog[catalog_i]["Salary"] = gray_entry["Salary"]
+                catalog[catalog_i]["GrayInstrFirst"] = gray_entry["First"]
+                match_count += 1
+                break
+
+    # Print graybook stats.
+    print("Graybook:")
+    print(f"  Total entries in graybook: {len(graybook)}")
+    print(f"  Entries in catalog matched: {match_count} / {len(catalog)}")
+    print()
+
     # Compute intersection stats.
     nothing = 0
     only_ices = 0
@@ -124,9 +162,14 @@ def main():
     print("Writing output to", args.output)
     # Make fieldnames.
     fieldnames = set(catalog[0].keys())
+    fieldnames.add("WadeGPA")
+    fieldnames.add("WadeInstrFirst")
+    fieldnames.add("WadeInstrLast")
     fieldnames.add("ICESRating")
     fieldnames.add("ICESTA")
-    fieldnames.add("WadeGPA")
+    fieldnames.add("Gender")
+    fieldnames.add("Salary")
+    fieldnames.add("GrayInstrFirst")
     write_csv(args.output, catalog, fieldnames=list(fieldnames))
 
 

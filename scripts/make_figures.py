@@ -38,6 +38,67 @@ if False:
         print(f"{key}: {len(value)} matches")
     print(f"All matches: {len(DATA_ALL)} matches")
 
+COLLEGES = {}
+for entry in read_csv("../data/colleges.csv"):
+    COLLEGES[entry["Subject"]] = entry["College"]
+
+COLLEGE_NAMES = {
+    "LC": "Vet med",
+    "KW": "General studies",
+    "KM": "Business",
+    "KU": "Law",
+    "LL": "Social work",
+    "KV": "LAS",
+    "KR": "FAA",
+    "LP": "Library and info sci",
+    "KT": "Media",
+    "KL": "Agriculture, consumer, env sciences",
+    "KN": "Education",
+    "KP": "Engineering",
+    "KY": "Applied health sci",
+    "LD": "?",
+    "KS": "Graduate",
+    "LG": "Labor and employment",
+    "LT": "Media",
+}
+
+
+def get_data_by_rating():
+    gpa_norate = []
+    gpa_excellent = []
+    gpa_outstanding = []
+    for entry in DATA_ALL:
+        if entry["WadeGPA"] != "NONE":
+            gpa = float(entry["WadeGPA"])
+            if entry["ICESRating"] == "NONE":
+                gpa_norate.append(gpa)
+            elif entry["ICESRating"] == "EXCELLENT":
+                gpa_excellent.append(gpa)
+            elif entry["ICESRating"] == "OUTSTANDING":
+                gpa_outstanding.append(gpa)
+
+    return gpa_norate, gpa_excellent, gpa_outstanding
+
+
+def print_stats_by_rating():
+    gpa_norate, gpa_excellent, gpa_outstanding = get_data_by_rating()
+
+    def print_stats(data):
+        print(f"  Count: {len(data)}")
+        print(f"  Mean: {np.mean(data):.2f}")
+        print(f"  Std Dev: {np.std(data):.2f}")
+
+    print("No Rating:")
+    print_stats(gpa_norate)
+    print("Excellent Rating:")
+    print_stats(gpa_excellent)
+    print("Outstanding Rating:")
+    print_stats(gpa_outstanding)
+    print("Any rating (E + O):")
+    print_stats(gpa_excellent + gpa_outstanding)
+    print("All:")
+    all_gpa = gpa_norate + gpa_excellent + gpa_outstanding
+    print_stats(all_gpa)
 
 
 # Sanity check: Rating frequency, separated by whether Wade entry exists.
@@ -69,37 +130,46 @@ def rating_freq_sanity_check():
     plt.show()
 
 
+def hist_gpa():
+    all_gpa = [float(entry["WadeGPA"]) for entry in DATA_ALL if entry["WadeGPA"] != "NONE"]
+    plt.clf()
+    plt.hist(all_gpa, bins=30, color='skyblue', edgecolor='black', alpha=0.7)
+    plt.xlabel("GPA")
+    plt.ylabel("Frequency")
+    plt.title("Distribution of GPA Values")
+    plt.xlim(0, 4)
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_boxplot(data, labels, notch=True, label_medians=False, title="GPA Distribution by Professor Rating"):
+    plt.clf()
+    plt.figure(figsize=(10, 3))
+    plt.boxplot(
+        data,
+        tick_labels=labels,
+        orientation="horizontal",
+        showfliers=False,
+        notch=notch,
+        widths=0.5,
+    )
+
+    # Label medians
+    if label_medians:
+        medians = [np.median(d) for d in data]
+        for i, median in enumerate(medians):
+            plt.text(median - 0.06, i + 1, f"{median:.2f}", ha='center', va='center', color='black')
+
+    plt.xlabel("GPA")
+    plt.title(title)
+    plt.tight_layout()
+    plt.show()
+
+
 # GPA vs rating
 def gpa_vs_rating():
-    gpa_norate = []
-    gpa_excellent = []
-    gpa_outstanding = []
-    for entry in DATA_ALL:
-        if entry["WadeGPA"] != "NONE":
-            gpa = float(entry["WadeGPA"])
-            if entry["ICESRating"] == "NONE":
-                gpa_norate.append(gpa)
-            elif entry["ICESRating"] == "EXCELLENT":
-                gpa_excellent.append(gpa)
-            elif entry["ICESRating"] == "OUTSTANDING":
-                gpa_outstanding.append(gpa)
-
+    gpa_norate, gpa_excellent, gpa_outstanding = get_data_by_rating()
     gpa_rated = gpa_excellent + gpa_outstanding
-
-    def plot_boxplot(data, labels):
-        plt.clf()
-        plt.figure(figsize=(10, 3))
-        plt.boxplot(
-            data,
-            tick_labels=labels,
-            orientation="horizontal",
-            showfliers=False,
-            notch=True,
-            widths=0.5,
-        )
-        plt.xlabel("GPA")
-        plt.title("GPA Distribution by ICES Rating")
-        plt.show()
 
     plot_boxplot(
         [gpa_norate, gpa_rated],
@@ -111,26 +181,46 @@ def gpa_vs_rating():
     )
 
 
-# GPA and rating frequency by subject.
-def stats_by_subject():
-    all_subjects = set()
-    for entry in DATA_ALL:
-        all_subjects.add(entry["Subject"])
+# Same as above, more condensed.
+def gpa_vs_rating_condensed():
+    gpa_norate, gpa_excellent, gpa_outstanding = get_data_by_rating()
+    gpa_rated = gpa_excellent + gpa_outstanding
 
-    count = {s: 0 for s in all_subjects}
-    rated = {s: 0 for s in all_subjects}
-    gpa = {s: [] for s in all_subjects}
+    plot_boxplot(
+        [gpa_norate, gpa_rated],
+        labels=[f"No Rating ({len(gpa_norate)})", f"E/O Rating ({len(gpa_rated)})"],
+        notch=False,
+        label_medians=True,
+        title="GPA Distribution by Professor Rating (Medians Labeled)"
+    )
+
+
+# GPA and rating frequency by college.
+def stats_by_college():
+    all_colleges = set()
+    for entry in COLLEGES.values():
+        all_colleges.add(entry)
+
+    count = {s: 0 for s in all_colleges}
+    rated = {s: 0 for s in all_colleges}
+    gpa = {s: [] for s in all_colleges}
     for entry in DATA_ALL:
-        s = entry["Subject"]
+        if entry["Subject"] not in COLLEGES:
+            continue
+        coll = COLLEGES[entry["Subject"]]
         if entry["WadeGPA"] != "NONE":
-            count[s] += 1
-            gpa[s].append(float(entry["WadeGPA"]))
+            count[coll] += 1
+            gpa[coll].append(float(entry["WadeGPA"]))
             if entry["ICESRating"] != "NONE":
-                rated[s] += 1
+                rated[coll] += 1
 
     # Sort subjects by rating frequency.
-    freq = {s: rated[s] / count[s] if count[s] > 0 else 0 for s in all_subjects}
-    sorted_subjects = sorted(freq, key=freq.get, reverse=True)
+    freq = {s: rated[s] / count[s] if count[s] > 0 else 0 for s in all_colleges}
+    sorted_subjects = sorted(freq, key=freq.get)
+
+    # Sort by median GPA.
+    medians = {s: np.median(gpa[s]) if gpa[s] else 0 for s in all_colleges}
+    sorted_subjects = sorted(medians, key=medians.get)
 
     # Prepare data for plotting.
     data = []
@@ -138,11 +228,9 @@ def stats_by_subject():
     for i, s in enumerate(sorted_subjects):
         data.append(gpa[s])
         labels.append(f"{s} ({rated[s]}/{count[s]})")
-        if i > 10:
-            break
 
     plt.clf()
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(12, 9))
     plt.boxplot(
         data,
         tick_labels=labels,
@@ -150,10 +238,14 @@ def stats_by_subject():
         showfliers=False,
         widths=0.3,
     )
+    # Annotate college names
+    for i, subj in enumerate(sorted_subjects):
+        plt.text(min(medians[subj], 3.5), i + 1.3, COLLEGE_NAMES[subj], ha='center', va='center', color='black')
     plt.xlabel("GPA")
+    plt.xlim(0, 4)
     plt.title("GPA Distribution by Subject")
     #plt.xticks(rotation=45, ha='right')
-    #plt.tight_layout()
+    plt.tight_layout()
     plt.show()
 
 
@@ -367,4 +459,101 @@ def stats_by_season():
     plt.show()
 
 
-rating_freq_sanity_check()
+def stats_by_gender():
+    gpa_male = []
+    gpa_female = []
+    rated_male = 0
+    rated_female = 0
+
+    # Only entries with WadeGPA have gender data.
+    for entry in DATA_ALL:
+        if entry["WadeGPA"] == "NONE" or entry["Gender"] == "NONE":
+            continue
+
+        gpa = float(entry["WadeGPA"])
+        rated = entry["ICESRating"] != "NONE"
+        if entry["Gender"] == "MALE":
+            gpa_male.append(gpa)
+            if rated:
+                rated_male += 1
+        elif entry["Gender"] == "FEMALE":
+            gpa_female.append(gpa)
+            if rated:
+                rated_female += 1
+        else:
+            raise ValueError(f"Unknown gender: {entry['Gender']}")
+
+    # Plot GPA vs Gender
+    plt.clf()
+    plt.figure(figsize=(10, 4))
+    plt.boxplot(
+        [gpa_female, gpa_male],
+        tick_labels=["Female", "Male"],
+        orientation="horizontal",
+        showfliers=False,
+        notch=True,
+        widths=0.4,
+    )
+    plt.xlabel("GPA")
+    plt.title("GPA Distribution by Professor Gender")
+
+    # Make another set of X axes, so we can plot the rating frequency.
+    freq_male = rated_male / len(gpa_male)
+    freq_female = rated_female / len(gpa_female)
+    ax2 = plt.gca().twiny()
+    ax2.barh([1, 2], [freq_female, freq_male], color='blue', alpha=0.3, height=0.3, label='Rating Frequency')
+    ax2.set_xlabel("Rating Frequency")
+    ax2.set_xlim(0, 1)
+
+    plt.tight_layout()
+    plt.show()
+
+
+def compute_rpb(x, y):
+    """
+    Compute point biserial correlation.
+    X: Negative values (no rating GPA).
+    Y: Positive values (rated GPA).
+    """
+    n0 = len(x)
+    n1 = len(y)
+    n = n0 + n1
+    m0 = np.mean(x)
+    m1 = np.mean(y)
+    s = np.std(x + y)
+
+    return (m1 - m0) / s * np.sqrt(n0 * n1 / (n ** 2))
+
+
+def corr_by_year():
+    data_points = []
+
+    for year, data in DATA_BY_YEAR.items():
+        gpa_norate = []
+        gpa_rate = []
+        for entry in data:
+            if entry["WadeGPA"] != "NONE":
+                gpa = float(entry["WadeGPA"])
+                if entry["ICESRating"] == "NONE":
+                    gpa_norate.append(gpa)
+                else:
+                    gpa_rate.append(gpa)
+
+        rpb = compute_rpb(gpa_norate, gpa_rate)
+        data_points.append((year, rpb))
+
+    plt.clf()
+    plt.bar(
+        [str(year) for year, _ in data_points],
+        [rpb for _, rpb in data_points],
+        color='skyblue', alpha=0.7
+    )
+    plt.xlabel("Year")
+    plt.ylabel("Point-Biserial Correlation (rPB)")
+    plt.xticks(rotation=45, ha='right')
+    plt.title("rPB by Year")
+    plt.tight_layout()
+    plt.show()
+
+
+corr_by_year()

@@ -21,6 +21,7 @@ First1,Last1;First2,Last2;
 import argparse
 import json
 import os
+import sys
 import time
 from threading import Thread
 from xml.etree import ElementTree
@@ -32,6 +33,8 @@ from utils import *
 CACHE_PATH = "catalog_cache.json"
 
 XML_CACHE = {}
+
+MAX_RETRIES = 10
 
 
 def get_xml(url, use_cache=True):
@@ -47,8 +50,18 @@ def get_xml(url, use_cache=True):
     if use_cache and url in XML_CACHE:
         return XML_CACHE[url]
 
-    response = requests.get(url)
-    response.raise_for_status()
+    for _ in range(MAX_RETRIES):
+        response = requests.get(url)
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            print(f"Error fetching {url}: {e}", flush=True, file=sys.stderr)
+            time.sleep(60)
+            continue
+        break
+    else:
+        raise ValueError(f"Failed to fetch {url}")
+
     tree = ElementTree.fromstring(response.content)
 
     if use_cache:

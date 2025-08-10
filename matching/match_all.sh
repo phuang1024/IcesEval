@@ -4,7 +4,7 @@
 
 mkdir -p ../data/match
 
-for year in {2010..2022}; do
+for year in {2010..2024}; do
     for season in fa sp; do
         echo Processing ${season}${year}
         python match.py --catalog ../data/catalog/catalog_${season}${year}.csv \

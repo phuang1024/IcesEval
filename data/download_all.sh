@@ -9,12 +9,15 @@ function down() {
 }
 
 ICES=http://citl.illinois.edu/docs/default-source/teachers-ranked-as-excellent/
-WADE=https://raw.githubusercontent.com/wadefagen/datasets/refs/heads/master/gpa/raw/
+WADE=https://raw.githubusercontent.com/wadefagen/datasets/refs/heads/main/gpa/raw/
 
 function download_ices() {
     mkdir -p ices
     cd ices
 
+    down ${ICES}tre-2024-fall.pdf   ices_fa2024.pdf
+    down ${ICES}tre-2024-spring.pdf ices_sp2024.pdf
+    down ${ICES}tre-2023-fall.pdf   ices_fa2023.pdf
     down ${ICES}tre-2023-spring.pdf ices_sp2023.pdf
     down ${ICES}tre-2022-fall.pdf   ices_fa2022.pdf
     down ${ICES}tre-2022-spring.pdf ices_sp2022.pdf
@@ -50,6 +53,9 @@ function download_wade() {
     mkdir -p wade
     cd wade
 
+    down ${WADE}fa2024.csv wade_fa2024.csv
+    down ${WADE}sp2024.csv wade_sp2024.csv
+    down ${WADE}fa2023.csv wade_fa2023.csv
     down ${WADE}sp2023.csv wade_sp2023.csv
     down ${WADE}fa2022.csv wade_fa2022.csv
     down ${WADE}sp2022.csv wade_sp2022.csv

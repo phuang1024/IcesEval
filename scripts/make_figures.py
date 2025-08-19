@@ -12,7 +12,7 @@ DATA_BY_YEAR = {}
 DATA_BY_SEASON = {}
 DATA_ALL = []
 
-for year in range(2010, 2023):
+for year in range(2010, 2025):
     for season in ("fa", "sp"):
         path = f"../data/match/match_{season}{year}.csv"
         if os.path.isfile(path):
@@ -20,13 +20,13 @@ for year in range(2010, 2023):
         else:
             print(f"File not found: {path}")
             DATA[(year, season)] = []
-for year in range(2010, 2023):
+for year in range(2010, 2025):
     DATA_BY_YEAR[year] = DATA[(year, "fa")] + DATA[(year, "sp")]
 for season in ("fa", "sp"):
     DATA_BY_SEASON[season] = []
-    for year in range(2010, 2023):
+    for year in range(2010, 2025):
         DATA_BY_SEASON[season] += DATA[(year, season)]
-for year in range(2010, 2023):
+for year in range(2010, 2025):
     DATA_ALL += DATA_BY_YEAR[year]
 
 if False:
@@ -42,24 +42,26 @@ COLLEGES = {}
 for entry in read_csv("../data/colleges.csv"):
     COLLEGES[entry["Subject"]] = entry["College"]
 
+# As short as possible.
 COLLEGE_NAMES = {
-    "LC": "Vet med",
-    "KW": "General studies",
+    "LC": "VetMed",
+    "KW": "GeneralStudies",
     "KM": "Business",
     "KU": "Law",
-    "LL": "Social work",
+    "LL": "SocialWork",
     "KV": "LAS",
     "KR": "FAA",
-    "LP": "Library and info sci",
+    "LP": "Library&Info",
     "KT": "Media",
-    "KL": "Agriculture, consumer, env sciences",
+    "KL": "ACES",
     "KN": "Education",
     "KP": "Engineering",
-    "KY": "Applied health sci",
-    "LD": "?",
-    "KS": "Graduate",
-    "LG": "Labor and employment",
-    "LT": "Media",
+    "KY": "AppliedHealth",
+    #"LD": "?",
+    #"KS": "Graduate",
+    "LG": "Labor&Employment",
+    #"LT": "Media",
+    "ALL": "All Colleges",
 }
 
 
@@ -127,6 +129,7 @@ def rating_freq_sanity_check():
     plt.xlabel("GPA Data Exists?")
     plt.ylabel("Frequency")
     plt.title("Rating Frequency by GPA Data Status")
+    plt.tight_layout()
     plt.show()
 
 
@@ -143,8 +146,15 @@ def hist_gpa():
 
 
 def plot_boxplot(data, labels, notch=True, label_medians=False, title="GPA Distribution by Professor Rating"):
+    q1 = [np.percentile(d, 25) for d in data]
+    q3 = [np.percentile(d, 75) for d in data]
+    iqrs = [q3[i] - q1[i] for i in range(len(data))]
+    lows = [q1[i] - 1.5 * iqrs[i] for i in range(len(data))]
+    highs = [q3[i] + 1.5 * iqrs[i] for i in range(len(data))]
+    print(lows, highs)
+
     plt.clf()
-    plt.figure(figsize=(10, 3))
+    plt.figure(figsize=(10, 3.5))
     plt.boxplot(
         data,
         tick_labels=labels,
@@ -162,8 +172,6 @@ def plot_boxplot(data, labels, notch=True, label_medians=False, title="GPA Distr
 
     plt.xlabel("GPA")
     plt.title(title)
-    plt.tight_layout()
-    plt.show()
 
 
 # GPA vs rating
@@ -175,10 +183,15 @@ def gpa_vs_rating():
         [gpa_norate, gpa_rated],
         labels=["No Rating", "Rated"]
     )
+    plt.tight_layout()
+    plt.show()
+
     plot_boxplot(
         [gpa_norate, gpa_excellent, gpa_outstanding],
         labels=["No Rating", "Excellent", "Outstanding"]
     )
+    plt.tight_layout()
+    plt.show()
 
 
 # Same as above, more condensed.
@@ -186,65 +199,125 @@ def gpa_vs_rating_condensed():
     gpa_norate, gpa_excellent, gpa_outstanding = get_data_by_rating()
     gpa_rated = gpa_excellent + gpa_outstanding
 
+    rpb_rated = compute_rpb(gpa_norate, gpa_rated)
+    rpb_outstanding = compute_rpb(gpa_norate, gpa_outstanding)
+    print("RPB Rated:", rpb_rated)
+    print("RPB Outstanding:", rpb_outstanding)
+
     plot_boxplot(
-        [gpa_norate, gpa_rated],
-        labels=[f"No Rating ({len(gpa_norate)})", f"E/O Rating ({len(gpa_rated)})"],
+        [gpa_norate, gpa_rated, gpa_outstanding],
+        labels=["Not recognized", "Excellent/Outstanding", "Outstanding"],
         notch=False,
         label_medians=True,
-        title="GPA Distribution by Professor Rating (Medians Labeled)"
+        title="",
+        #title="GPA Distribution by Professor Rating (Medians Labeled)",
     )
+
+    ax2 = plt.gca().twiny()
+    ax2.barh([2, 3], [rpb_rated, rpb_outstanding], color='green', alpha=0.5, height=0.5, label='rPB')
+    ax2.set_xlabel("Point-Biserial Correlation (rPB)")
+    ax2.set_xlim(0, 1)
+
+    plt.tight_layout()
+    plt.show()
 
 
 # GPA and rating frequency by college.
 def stats_by_college():
+    # Aggregate data by college
     all_colleges = set()
     for entry in COLLEGES.values():
         all_colleges.add(entry)
+    # Erroneous
+    all_colleges.remove("LD")
+    all_colleges.remove("LT")
+    all_colleges.remove("KS")
 
-    count = {s: 0 for s in all_colleges}
-    rated = {s: 0 for s in all_colleges}
-    gpa = {s: [] for s in all_colleges}
+    count = {s: 0 for s in all_colleges}  # Number of valid entries
+    rated = {s: 0 for s in all_colleges}  # Number of entries with Excellent
+    gpa = {s: [] for s in all_colleges}  # GPA of each entry
+    neg_gpa = {s: [] for s in all_colleges}  # GPA of entries without rating
+    pos_gpa = {s: [] for s in all_colleges}  # GPA of entries with rating
     for entry in DATA_ALL:
         if entry["Subject"] not in COLLEGES:
             continue
         coll = COLLEGES[entry["Subject"]]
+        if coll not in all_colleges:
+            continue
+
         if entry["WadeGPA"] != "NONE":
             count[coll] += 1
             gpa[coll].append(float(entry["WadeGPA"]))
-            if entry["ICESRating"] != "NONE":
+            if entry["ICESRating"] == "NONE":
+                neg_gpa[coll].append(float(entry["WadeGPA"]))
+            else:
+                pos_gpa[coll].append(float(entry["WadeGPA"]))
                 rated[coll] += 1
 
-    # Sort subjects by rating frequency.
-    freq = {s: rated[s] / count[s] if count[s] > 0 else 0 for s in all_colleges}
-    sorted_subjects = sorted(freq, key=freq.get)
+    # Create entry of all colleges.
+    count["ALL"] = sum(count.values())
+    rated["ALL"] = sum(rated.values())
+    gpa["ALL"] = []
+    neg_gpa["ALL"] = []
+    pos_gpa["ALL"] = []
+    for coll in all_colleges:
+        gpa["ALL"] += gpa[coll]
+        neg_gpa["ALL"] += neg_gpa[coll]
+        pos_gpa["ALL"] += pos_gpa[coll]
 
+    freq = {s: rated[s] / count[s] if count[s] > 0 else 0 for s in count.keys()}
+    medians = {s: np.median(gpa[s]) if gpa[s] else 0 for s in count.keys()}
+
+    # Sort subjects by rating frequency.
+    sorted_subjects = sorted(freq, key=freq.get)
     # Sort by median GPA.
-    medians = {s: np.median(gpa[s]) if gpa[s] else 0 for s in all_colleges}
     sorted_subjects = sorted(medians, key=medians.get)
+
+    sorted_subjects.remove("ALL")
+    sorted_subjects.append("ALL")
 
     # Prepare data for plotting.
     data = []
     labels = []
     for i, s in enumerate(sorted_subjects):
         data.append(gpa[s])
-        labels.append(f"{s} ({rated[s]}/{count[s]})")
+        #labels.append(f"{s} ({rated[s]}/{count[s]})")
+        labels.append(COLLEGE_NAMES[s])
 
     plt.clf()
-    plt.figure(figsize=(12, 9))
+    plt.figure(figsize=(10, 9))
     plt.boxplot(
         data,
         tick_labels=labels,
-        orientation="horizontal",
+        orientation="vertical",
         showfliers=False,
-        widths=0.3,
+        widths=0.5,
     )
     # Annotate college names
+    """
     for i, subj in enumerate(sorted_subjects):
         plt.text(min(medians[subj], 3.5), i + 1.3, COLLEGE_NAMES[subj], ha='center', va='center', color='black')
-    plt.xlabel("GPA")
-    plt.xlim(0, 4)
-    plt.title("GPA Distribution by Subject")
-    #plt.xticks(rotation=45, ha='right')
+    """
+    plt.ylabel("GPA")
+    plt.ylim(0, 4)
+    plt.xticks(rotation=45, ha='right')
+
+
+    rpb = {}
+    for coll in count.keys():
+        if neg_gpa[coll] and pos_gpa[coll]:
+            rpb[coll] = compute_rpb(neg_gpa[coll], pos_gpa[coll])
+        else:
+            rpb[coll] = 0
+
+    ax2 = plt.gca().twinx()
+    x = [rpb[s] for s in sorted_subjects]
+    ax2.bar(range(1, len(sorted_subjects) + 1), x, color='green', alpha=0.5, width=0.5, label='rPB')
+    ax2.axhline(0, color='blue', linestyle='--', linewidth=1)
+    ax2.set_ylabel("Point-Biserial Correlation (rPB)")
+    ax2.set_ylim(-0.3, 0.9)
+
+    plt.title("GPA Distribution and rPB by Subject")
     plt.tight_layout()
     plt.show()
 
@@ -373,7 +446,7 @@ def rating_freq_by_gpa():
 
 def stats_by_year():
     # 1. Average GPA by year.
-    x = range(2010, 2023)
+    x = range(2010, 2025)
     y = []
     for year in x:
         gpas = [float(entry["WadeGPA"]) for entry in DATA_BY_YEAR[year] if entry["WadeGPA"] != "NONE"]
@@ -393,7 +466,7 @@ def stats_by_year():
     plt.show()
 
     # 2. Rating frequency by year.
-    x = range(2010, 2023)
+    x = range(2010, 2025)
     totals = [0] * len(x)
     rated_counts = [0] * len(x)
     for i, year in enumerate(x):
@@ -546,14 +619,16 @@ def corr_by_year():
     plt.bar(
         [str(year) for year, _ in data_points],
         [rpb for _, rpb in data_points],
-        color='skyblue', alpha=0.7
+        color='green', alpha=0.5
     )
     plt.xlabel("Year")
     plt.ylabel("Point-Biserial Correlation (rPB)")
     plt.xticks(rotation=45, ha='right')
-    plt.title("rPB by Year")
+    plt.title("rPB by Year between GPA and Professor Rating")
     plt.tight_layout()
     plt.show()
 
 
-corr_by_year()
+gpa_vs_rating_condensed()
+#corr_by_year()
+#stats_by_college()

@@ -5,5 +5,7 @@ When faculty evaluations are determined by students, the integrity of the system
 We use novel data of the University of Illinois Urbana-Champaign, and find a statistically significant positive correlation between GPA and teaching evaluations, and compute the strength of correlation in different departments.
 
 Paper: https://github.com/phuang1024/IcesEval/blob/master/paper.pdf
+
 Supplemental material: https://github.com/phuang1024/IcesEval/blob/master/supplement.pdf
+
 Data: https://github.com/phuang1024/IcesEval/blob/master/data/

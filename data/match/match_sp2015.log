@@ -1,0 +1,38 @@
+Matching:
+  Catalog: ../data/catalog/catalog_sp2015.csv
+  ICES: ../data/ices/ices_sp2015.csv
+  Wade: ../data/wade/wade_sp2015.csv
+  Output: ../data/match/match_sp2015.csv
+
+Catalog:
+  Total entries: 10516
+
+Wade:
+  Total entries: 5606
+  Matched: 5603
+  Not matched: 3
+    Not matched indices in Wade:
+      3486 4443 5589
+
+ICES:
+  Total entries: 1692
+  Matched: 1540
+  Not matched: 152
+    Not matched indices in ICES:
+      56 60 68 70 72 73 93 98 107 114 116 122 123 126 127 130 134 158 180 204 205 212 318 319 321 323 329 331 332 333 334 335 338 346 389 425 426 428 429 430 431 433 434 436 437 441 443 444 446 449 451 452 453 454 455 456 457 458 459 460 461 462 463 464 465 466 480 481 483 487 488 489 493 495 497 506 521 542 546 608 625 626 635 643 663 666 667 672 682 683 684 688 691 692 693 694 696 838 841 842 843 845 858 909 912 913 914 1014 1039 1060 1062 1066 1069 1100 1104 1134 1256 1267 1271 1273 1275 1276 1277 1279 1282 1289 1291 1297 1300 1303 1310 1320 1331 1334 1336 1339 1340 1341 1343 1344 1456 1504 1521 1605 1607 1617 1619 1620 1674 1675 1682 1688
+  No matching Wade entry: 0
+    No matching Wade indices in ICES:
+      
+
+Graybook:
+  Total entries in graybook: 2440
+  Entries in catalog matched: 1741 / 10516
+
+Coverage stats:
+  Total catalog entries: 10516
+  Nothing matched: 0
+  Only ICES matched: 0
+  Only Wade matched: 7225
+  Both matched: 3291
+
+Writing output to ../data/match/match_sp2015.csv

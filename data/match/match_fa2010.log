@@ -1,0 +1,38 @@
+Matching:
+  Catalog: ../data/catalog/catalog_fa2010.csv
+  ICES: ../data/ices/ices_fa2010.csv
+  Wade: ../data/wade/wade_fa2010.csv
+  Output: ../data/match/match_fa2010.csv
+
+Catalog:
+  Total entries: 10785
+
+Wade:
+  Total entries: 5839
+  Matched: 5802
+  Not matched: 37
+    Not matched indices in Wade:
+      17 312 313 511 643 681 695 805 1385 1386 1387 1388 1389 1390 1391 1392 1629 1699 1700 1767 2001 2148 2253 2444 2676 3988 4098 4099 4110 4111 5006 5204 5248 5320 5759 5787 5794
+
+ICES:
+  Total entries: 1512
+  Matched: 1367
+  Not matched: 145
+    Not matched indices in ICES:
+      59 86 91 94 95 172 173 175 177 179 180 181 182 183 184 185 186 187 188 190 191 192 193 194 195 196 197 198 199 201 202 203 204 205 234 242 291 293 295 296 299 301 302 303 304 306 315 316 318 333 341 371 375 378 381 383 388 389 391 392 394 395 404 415 417 419 421 422 424 446 456 485 492 508 549 551 552 553 554 572 604 607 629 641 648 657 660 661 663 669 696 697 699 700 776 777 778 780 782 789 793 801 805 859 863 868 869 879 884 889 896 904 910 922 934 935 938 999 1011 1055 1079 1101 1105 1106 1107 1110 1129 1130 1131 1133 1152 1270 1273 1310 1331 1441 1451 1498 1499 1501 1503 1504 1505 1506 1507
+  No matching Wade entry: 0
+    No matching Wade indices in ICES:
+      
+
+Graybook:
+  Total entries in graybook: 2317
+  Entries in catalog matched: 2112 / 10785
+
+Coverage stats:
+  Total catalog entries: 10785
+  Nothing matched: 0
+  Only ICES matched: 0
+  Only Wade matched: 7402
+  Both matched: 3383
+
+Writing output to ../data/match/match_fa2010.csv

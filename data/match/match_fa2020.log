@@ -1,0 +1,38 @@
+Matching:
+  Catalog: ../data/catalog/catalog_fa2020.csv
+  ICES: ../data/ices/ices_fa2020.csv
+  Wade: ../data/wade/wade_fa2020.csv
+  Output: ../data/match/match_fa2020.csv
+
+Catalog:
+  Total entries: 12225
+
+Wade:
+  Total entries: 2307
+  Matched: 2297
+  Not matched: 10
+    Not matched indices in Wade:
+      599 659 728 1096 1098 1099 1100 1106 1600 1675
+
+ICES:
+  Total entries: 2084
+  Matched: 2056
+  Not matched: 28
+    Not matched indices in ICES:
+      12 439 594 633 656 665 667 867 954 1043 1082 1304 1650 1667 1809 2002 2003 2004 2005 2009 2014 2015 2016 2018 2020 2021 2022 2039
+  No matching Wade entry: 0
+    No matching Wade indices in ICES:
+      
+
+Graybook:
+  Total entries in graybook: 2713
+  Entries in catalog matched: 1809 / 12225
+
+Coverage stats:
+  Total catalog entries: 12225
+  Nothing matched: 0
+  Only ICES matched: 0
+  Only Wade matched: 7762
+  Both matched: 4463
+
+Writing output to ../data/match/match_fa2020.csv

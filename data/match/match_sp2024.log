@@ -1,0 +1,38 @@
+Matching:
+  Catalog: ../data/catalog/catalog_sp2024.csv
+  ICES: ../data/ices/ices_sp2024.csv
+  Wade: ../data/wade/wade_sp2024.csv
+  Output: ../data/match/match_sp2024.csv
+
+Catalog:
+  Total entries: 11316
+
+Wade:
+  Total entries: 2369
+  Matched: 2340
+  Not matched: 29
+    Not matched indices in Wade:
+      487 492 503 508 767 867 880 881 885 894 897 909 914 915 917 935 936 937 940 941 1178 1839 1844 1852 1857 1865 2139 2294 2300
+
+ICES:
+  Total entries: 1994
+  Matched: 1922
+  Not matched: 72
+    Not matched indices in ICES:
+      127 164 167 171 178 204 610 629 645 665 738 744 746 752 768 769 770 771 774 775 778 791 816 817 818 931 1182 1235 1586 1695 1703 1721 1931 1932 1934 1935 1936 1937 1938 1939 1943 1944 1947 1948 1949 1950 1952 1953 1955 1956 1957 1960 1961 1962 1963 1967 1969 1970 1971 1972 1973 1975 1976 1980 1982 1984 1986 1987 1990 1991 1992 1993
+  No matching Wade entry: 0
+    No matching Wade indices in ICES:
+      
+
+Graybook:
+  Total entries in graybook: 0
+  Entries in catalog matched: 0 / 11316
+
+Coverage stats:
+  Total catalog entries: 11316
+  Nothing matched: 0
+  Only ICES matched: 0
+  Only Wade matched: 7423
+  Both matched: 3893
+
+Writing output to ../data/match/match_sp2024.csv

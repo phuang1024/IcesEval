@@ -1,0 +1,17 @@
+Matching:
+  Catalog: ../data/catalog/catalog_fa2017.csv
+  ICES: ../data/ices/ices_fa2017.csv
+  Wade: ../data/wade/wade_fa2017.csv
+  Output: ../data/match/match_fa2017.csv
+
+Catalog:
+  Total entries: 11280
+
+Traceback (most recent call last):
+  File "/home/patrick/Work/Code/Projects/IcesEval/matching/match.py", line 177, in <module>
+    main()
+  File "/home/patrick/Work/Code/Projects/IcesEval/matching/match.py", line 43, in main
+    wade = parse_wade(args.wade)
+  File "/home/patrick/Work/Code/Projects/IcesEval/matching/wade.py", line 42, in parse_wade
+    "CRN": entry["CRN"],
+KeyError: 'CRN'

@@ -89,6 +89,7 @@ def print_stats_by_rating():
         print(f"  Count: {len(data)}")
         print(f"  Mean: {np.mean(data):.2f}")
         print(f"  Std Dev: {np.std(data):.2f}")
+        print(f"  5 number summary: {np.percentile(data, [0, 25, 50, 75, 100])}")
 
     print("No Rating:")
     print_stats(gpa_norate)
@@ -206,7 +207,7 @@ def gpa_vs_rating_condensed():
 
     plot_boxplot(
         [gpa_norate, gpa_rated, gpa_outstanding],
-        labels=["Not recognized", "Excellent/Outstanding", "Outstanding"],
+        labels=["Not Recognized", "Excellent/Outstanding", "Outstanding"],
         notch=False,
         label_medians=True,
         title="",
@@ -315,11 +316,27 @@ def stats_by_college():
     ax2.bar(range(1, len(sorted_subjects) + 1), x, color='green', alpha=0.5, width=0.5, label='rPB')
     ax2.axhline(0, color='blue', linestyle='--', linewidth=1)
     ax2.set_ylabel("Point-Biserial Correlation (rPB)")
-    ax2.set_ylim(-0.3, 0.9)
+    ax2.set_ylim(-0.5, 1.5)
 
     plt.title("GPA Distribution and rPB by Subject")
     plt.tight_layout()
     plt.show()
+
+    # Print all stats.
+    print("College Statistics:")
+    for coll in sorted_subjects:
+        print(coll, COLLEGE_NAMES[coll])
+        print(f"  Count: {count[coll]}")
+        print(f"  Rated: {rated[coll]} ({freq[coll]:.2%})")
+        print(f"  Median GPA: {medians[coll]:.2f}")
+        print(f"  Mean GPA: {np.mean(gpa[coll]):.2f}")
+        print(f"  Std Dev GPA: {np.std(gpa[coll]):.2f}")
+        print(f"  rPB: {rpb[coll]:.2f}")
+
+    print("Name && Population size && Num rated && Mean && Std. dev. && rPB \\\\")
+    for coll in sorted_subjects:
+        print(f"{COLLEGE_NAMES[coll]} && {count[coll]} && {rated[coll]} && {np.mean(gpa[coll]):.2f} && {np.std(gpa[coll]):.2f} && {rpb[coll]:.2f} \\\\")
+        print("\\hline")
 
 
 # GPA and rating frequency by level.
@@ -629,6 +646,7 @@ def corr_by_year():
     plt.show()
 
 
+#print_stats_by_rating()
 gpa_vs_rating_condensed()
 #corr_by_year()
 #stats_by_college()

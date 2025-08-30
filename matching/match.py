@@ -103,6 +103,7 @@ def main():
 
     # Match graybook.
     # First, initialize Gender field.
+    """
     for entry in catalog:
         entry["Gender"] = "NONE"
 
@@ -133,6 +134,7 @@ def main():
     print(f"  Total entries in graybook: {len(graybook)}")
     print(f"  Entries in catalog matched: {match_count} / {len(catalog)}")
     print()
+    """
 
     # Compute intersection stats.
     nothing = 0
@@ -167,9 +169,9 @@ def main():
     fieldnames.add("WadeInstrLast")
     fieldnames.add("ICESRating")
     fieldnames.add("ICESTA")
-    fieldnames.add("Gender")
-    fieldnames.add("Salary")
-    fieldnames.add("GrayInstrFirst")
+    #fieldnames.add("Gender")
+    #fieldnames.add("Salary")
+    #fieldnames.add("GrayInstrFirst")
     write_csv(args.output, catalog, fieldnames=list(fieldnames))
 
 
